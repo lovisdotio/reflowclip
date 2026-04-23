@@ -102,13 +102,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             flash(title: "Empty", systemImage: "exclamationmark.circle")
             return
         }
-        guard Reflow.looksLikeTuiBlock(original) else {
-            flash(title: "Skipped", systemImage: "minus.circle")
-            return
-        }
-        let reflowed = Reflow.apply(original)
-        if reflowed == original || reflowed.isEmpty {
-            flash(title: "No change", systemImage: "minus.circle")
+        guard let reflowed = Reflow.apply(original) else {
+            flash(title: "Single line", systemImage: "minus.circle")
             return
         }
         pasteboard.clearContents()

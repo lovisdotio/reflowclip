@@ -11,21 +11,24 @@ enum Reflow {
         return false
     }
 
-    static func apply(_ text: String) -> String {
+    /// Returns the reflowed text, or nil if no meaningful change would occur
+    /// (single line, empty, or already clean).
+    static func apply(_ text: String) -> String? {
         let rawLines = text.components(separatedBy: .newlines)
         var processed = rawLines.map { stripBorders(from: $0) }.map { trimTrailing($0) }
 
         while let first = processed.first, first.isEmpty { processed.removeFirst() }
         while let last = processed.last, last.isEmpty { processed.removeLast() }
 
-        if processed.isEmpty { return text }
+        if processed.count < 2 { return nil }
 
         let indent = commonLeadingSpaces(processed)
         if indent > 0 {
             processed = processed.map { $0.count >= indent ? String($0.dropFirst(indent)) : $0 }
         }
 
-        return joinReflowed(processed)
+        let result = joinReflowed(processed)
+        return result == text ? nil : result
     }
 
     private static func stripBorders(from line: String) -> String {
@@ -81,25 +84,15 @@ enum Reflow {
     }
 
     private static func joinTwo(_ a: String, _ b: String) -> String {
+        // Explicit backslash line continuation: strip it and join with a single space.
         if a.hasSuffix("\\") {
             let trimmed = String(a.dropLast()).trimmingCharacters(in: .whitespaces)
             return trimmed + " " + b.trimmingLeading()
         }
-        let opsEnd = ["&&", "||", "|", ",", ";", "(", "[", "{", "<", "=", "+", "-", "*", "/"]
-        for op in opsEnd {
-            if a.hasSuffix(op) { return a + " " + b.trimmingLeading() }
-        }
-        let opsStart = ["&&", "||", "|", ",", ";", ")", "]", "}", ">"]
-        for op in opsStart {
-            if b.hasPrefix(op) { return trimTrailing(a) + " " + b }
-        }
-        guard let lastChar = a.last, let firstChar = b.first else { return a + b }
-        let isToken: (Character) -> Bool = { ch in
-            ch.isLetter || ch.isNumber || ch == "_" || ch == "-" || ch == "." ||
-            ch == "/" || ch == ":" || ch == "=" || ch == "~" || ch == "@" || ch == "?" || ch == "&"
-        }
-        if isToken(lastChar) && isToken(firstChar) { return a + b }
-        return a + " " + b.trimmingLeading()
+        // Default for command-style wraps: join with a single space.
+        // Terminals typically strip trailing whitespace on copy, so we've lost
+        // information about whether the break was at a space — assume it was.
+        return trimTrailing(a) + " " + b.trimmingLeading()
     }
 }
 
