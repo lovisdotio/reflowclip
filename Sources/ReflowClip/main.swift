@@ -111,14 +111,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             pasteboard.setString(reflowed, forType: .string)
             wasReflowed = true
         } else {
-            // Already a single line — auto-paste the current clipboard anyway.
             wasReflowed = false
         }
-        // Simulate ⌘V so the user gets a one-shot "reflow + paste".
-        // Small delay so the user's physical ⌥⌘V keys can be released first,
-        // otherwise the synthetic ⌘V event merges with held modifiers.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            self.simulatePaste()
+        // Post ⌘V off-main so our polling for modifier release doesn't block UI.
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.simulatePaste()
         }
         flash(
             title: wasReflowed ? "Reflowed + pasted" : "Pasted",
@@ -135,6 +132,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             _ = AXIsProcessTrustedWithOptions(opts)
             return
         }
+
+        // Wait up to 500ms for the user's ⌥ / ⌘ / ⇧ / ⌃ to release, so our
+        // synthetic ⌘V isn't merged with held modifiers into a different
+        // shortcut (which is what caused "had to press twice").
+        let start = Date()
+        let keys: [CGKeyCode] = [
+            CGKeyCode(kVK_Option), CGKeyCode(kVK_RightOption),
+            CGKeyCode(kVK_Command), CGKeyCode(kVK_RightCommand),
+            CGKeyCode(kVK_Shift), CGKeyCode(kVK_RightShift),
+            CGKeyCode(kVK_Control), CGKeyCode(kVK_RightControl)
+        ]
+        while Date().timeIntervalSince(start) < 0.5 {
+            let anyDown = keys.contains { CGEventSource.keyState(.combinedSessionState, key: $0) }
+            if !anyDown { break }
+            usleep(8_000) // 8ms
+        }
+
         let src = CGEventSource(stateID: .combinedSessionState)
         let vKey = CGKeyCode(kVK_ANSI_V)
         let down = CGEvent(keyboardEventSource: src, virtualKey: vKey, keyDown: true)
