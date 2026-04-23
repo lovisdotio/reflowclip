@@ -16,7 +16,7 @@ final class HotKey {
         HotKey.installEventHandlerIfNeeded()
 
         let hotKeyID = EventHotKeyID(signature: OSType(0x52_46_4C_57), id: id) // 'RFLW'
-        RegisterEventHotKey(
+        let status = RegisterEventHotKey(
             keyCode,
             modifiers,
             hotKeyID,
@@ -24,6 +24,9 @@ final class HotKey {
             0,
             &hotKeyRef
         )
+        if status != noErr {
+            fputs("ReflowClip: RegisterEventHotKey failed (status=\(status))\n", stderr)
+        }
     }
 
     deinit {

@@ -35,7 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(NSMenuItem.separator())
 
-        let hint = NSMenuItem(title: "Hotkey: ⇧⌘V", action: nil, keyEquivalent: "")
+        let hint = NSMenuItem(title: "Hotkey: ⌥⌘V", action: nil, keyEquivalent: "")
         hint.isEnabled = false
         menu.addItem(hint)
 
@@ -61,9 +61,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func registerHotKey() {
+        // ⌥⌘V — free in Terminal.app, iTerm2, Ghostty, VS Code. Three keys, easy reach.
         hotKey = HotKey(
             keyCode: UInt32(kVK_ANSI_V),
-            modifiers: UInt32(cmdKey | shiftKey)
+            modifiers: UInt32(cmdKey | optionKey)
         ) { [weak self] in
             self?.reflowClipboard()
         }
@@ -80,7 +81,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         alert.informativeText = """
         Fixes multi-line copies from Claude Code, Codex, and other TUI tools.
 
-        Copy a wrapped command, press ⇧⌘V, paste with ⌘V.
+        Copy a wrapped command, press ⌥⌘V, paste with ⌘V.
 
         github.com/lovisdotio/reflowclip
         """

@@ -26,14 +26,14 @@ One line. No Apple Developer account. No Gatekeeper dialog. No Accessibility per
 ## Use
 
 1. Copy a wrapped command from your terminal (Terminal, iTerm, Ghostty, Warp, VS Code, Cursor — whatever).
-2. Press `⇧⌘V` — the clipboard gets reflowed in place.
+2. Press `⌥⌘V` — the clipboard gets reflowed in place.
 3. Paste with `⌘V` — one clean line.
 
 Works from any app, pastes into any app. If the clipboard doesn't look like a TUI block, nothing happens — regular copies are never modified.
 
 ## How it works
 
-- A small menu-bar app registers `⇧⌘V` as a global hotkey via Carbon (no Accessibility permission required).
+- A small menu-bar app registers `⌥⌘V` as a global hotkey via Carbon (no Accessibility permission required).
 - When triggered, it reads the clipboard.
 - If the text contains box-drawing characters (`│ ┃ ╭ ╰ ┌ └ ─ ━` etc.), it strips the borders, joins wrapped lines, and writes the cleaned version back.
 - Otherwise: no-op. Regular copies are never touched.

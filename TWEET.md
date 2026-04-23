@@ -10,7 +10,7 @@ fixed it. one line on macOS:
 curl -fsSL https://raw.githubusercontent.com/lovisdotio/reflowclip/main/install.sh | bash
 ```
 
-copy → ⇧⌘V → paste clean.
+copy → ⌥⌘V → paste clean.
 
 ---
 
@@ -24,7 +24,7 @@ built a tiny mac app to fix it:
 curl -fsSL https://raw.githubusercontent.com/lovisdotio/reflowclip/main/install.sh | bash
 ```
 
-copy, hit ⇧⌘V, paste.
+copy, hit ⌥⌘V, paste.
 
 ---
 
@@ -38,7 +38,7 @@ one line to fix it on mac:
 curl -fsSL https://raw.githubusercontent.com/lovisdotio/reflowclip/main/install.sh | bash
 ```
 
-then ⇧⌘V before paste.
+then ⌥⌘V before paste.
 
 ---
 
@@ -52,4 +52,4 @@ fix:
 curl -fsSL https://raw.githubusercontent.com/lovisdotio/reflowclip/main/install.sh | bash
 ```
 
-⇧⌘V before ⌘V. done.
+⌥⌘V before ⌘V. done.

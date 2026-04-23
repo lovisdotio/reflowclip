@@ -66,7 +66,7 @@ printf '\n✓ Installed: %s\n' "${APP_PATH}"
 printf '✓ Running now — look for the menu bar icon.\n\n'
 printf 'Usage:\n'
 printf '  1. Copy a wrapped command from Claude Code / Codex / any TUI.\n'
-printf '  2. Press ⇧⌘V to reflow the clipboard.\n'
+printf '  2. Press ⌥⌘V to reflow the clipboard.\n'
 printf '  3. Paste with ⌘V — one clean line.\n\n'
 printf 'Uninstall:\n'
 printf '  launchctl unload %s\n' "${PLIST_PATH}"
