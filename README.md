@@ -21,23 +21,20 @@ Which fails to run.
 curl -fsSL https://raw.githubusercontent.com/lovisdotio/reflowclip/main/install.sh | bash
 ```
 
-One line. No Apple Developer account. No Gatekeeper dialog. No Accessibility permission.
+One line. No Apple Developer account. No Gatekeeper dialog.
 
 ## Use
 
 1. Copy a wrapped command from your terminal (Terminal, iTerm, Ghostty, Warp, VS Code, Cursor — whatever).
-2. Press `⌥⌘V` — the clipboard gets reflowed in place.
-3. Paste with `⌘V` — one clean line.
+2. Press `⌥⌘V` — the clipboard gets reflowed **and pasted** in one shot.
 
-Works from any app, pastes into any app. If the clipboard doesn't look like a TUI block, nothing happens — regular copies are never modified.
+On first use, macOS will prompt for **Accessibility** permission (needed so ReflowClip can send the `⌘V` keystroke on your behalf). Grant it once and you're done.
 
 ## How it works
 
-- A small menu-bar app registers `⌥⌘V` as a global hotkey via Carbon (no Accessibility permission required).
-- When triggered, it reads the clipboard.
-- If the text contains box-drawing characters (`│ ┃ ╭ ╰ ┌ └ ─ ━` etc.), it strips the borders, joins wrapped lines, and writes the cleaned version back.
-- Otherwise: no-op. Regular copies are never touched.
-- Clipboard is only read when you press the hotkey. No background polling, no privacy banners.
+- A menu-bar app registers `⌥⌘V` as a global hotkey via Carbon.
+- When triggered, it reads the clipboard, strips any TUI borders, joins wrapped lines with spaces, writes the cleaned version back, then posts a synthetic `⌘V` to paste into the frontmost app.
+- Clipboard is only read when you press the hotkey. No background polling.
 
 ## Uninstall
 
