@@ -7,11 +7,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotKey: HotKey?
     private var enabled = true
     private var toggleItem: NSMenuItem!
+    private var lastTrusted = false
+    private var trustTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         setupStatusItem()
         registerHotKey()
+        checkAndPromptAccessibility()
+        startAccessibilityWatcher()
+    }
+
+    private func checkAndPromptAccessibility() {
+        lastTrusted = AXIsProcessTrusted()
+        fputs("ReflowClip: startup AXIsProcessTrusted=\(lastTrusted)\n", stderr)
+        if !lastTrusted {
+            let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+            _ = AXIsProcessTrustedWithOptions(opts)
+        }
+    }
+
+    /// If Accessibility is granted while we're running, the current process
+    /// stays cached as not-trusted until it restarts. Watch for the flip and
+    /// exit — launchd's KeepAlive brings us back with a fresh trust state.
+    private func startAccessibilityWatcher() {
+        trustTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            let now = AXIsProcessTrusted()
+            if !self.lastTrusted && now {
+                fputs("ReflowClip: Accessibility just granted — restarting to apply\n", stderr)
+                exit(0)
+            }
+            self.lastTrusted = now
+        }
     }
 
     private func setupStatusItem() {
@@ -124,14 +152,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func simulatePaste() {
-        // Requires Accessibility permission. On first use, macOS will prompt
-        // the user to enable it for ReflowClip.
-        if !AXIsProcessTrusted() {
-            fputs("ReflowClip: Accessibility not granted — prompting\n", stderr)
-            let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-            _ = AXIsProcessTrustedWithOptions(opts)
-            return
-        }
+        // Requires Accessibility. If not granted, the post is silently dropped
+        // by macOS — the startup prompt + watcher handles asking/restarting.
+        // Don't re-prompt here, or we'd spam the user on every hotkey press.
 
         // Wait up to 500ms for the user's ⌥ / ⌘ / ⇧ / ⌃ to release, so our
         // synthetic ⌘V isn't merged with held modifiers into a different
