@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 import Carbon.HIToolbox
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -62,10 +63,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func registerHotKey() {
         // ⌥⌘V — free in Terminal.app, iTerm2, Ghostty, VS Code. Three keys, easy reach.
+        fputs("ReflowClip: registering ⌥⌘V hotkey\n", stderr)
         hotKey = HotKey(
             keyCode: UInt32(kVK_ANSI_V),
             modifiers: UInt32(cmdKey | optionKey)
         ) { [weak self] in
+            fputs("ReflowClip: hotkey fired\n", stderr)
             self?.reflowClipboard()
         }
     }
@@ -102,13 +105,44 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             flash(title: "Empty", systemImage: "exclamationmark.circle")
             return
         }
-        guard let reflowed = Reflow.apply(original) else {
-            flash(title: "Single line", systemImage: "minus.circle")
+        let wasReflowed: Bool
+        if let reflowed = Reflow.apply(original) {
+            pasteboard.clearContents()
+            pasteboard.setString(reflowed, forType: .string)
+            wasReflowed = true
+        } else {
+            // Already a single line — auto-paste the current clipboard anyway.
+            wasReflowed = false
+        }
+        // Simulate ⌘V so the user gets a one-shot "reflow + paste".
+        // Small delay so the user's physical ⌥⌘V keys can be released first,
+        // otherwise the synthetic ⌘V event merges with held modifiers.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            self.simulatePaste()
+        }
+        flash(
+            title: wasReflowed ? "Reflowed + pasted" : "Pasted",
+            systemImage: "checkmark.circle.fill"
+        )
+    }
+
+    private func simulatePaste() {
+        // Requires Accessibility permission. On first use, macOS will prompt
+        // the user to enable it for ReflowClip.
+        if !AXIsProcessTrusted() {
+            fputs("ReflowClip: Accessibility not granted — prompting\n", stderr)
+            let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+            _ = AXIsProcessTrustedWithOptions(opts)
             return
         }
-        pasteboard.clearContents()
-        pasteboard.setString(reflowed, forType: .string)
-        flash(title: "Reflowed", systemImage: "checkmark.circle.fill")
+        let src = CGEventSource(stateID: .combinedSessionState)
+        let vKey = CGKeyCode(kVK_ANSI_V)
+        let down = CGEvent(keyboardEventSource: src, virtualKey: vKey, keyDown: true)
+        let up = CGEvent(keyboardEventSource: src, virtualKey: vKey, keyDown: false)
+        down?.flags = .maskCommand
+        up?.flags = .maskCommand
+        down?.post(tap: .cghidEventTap)
+        up?.post(tap: .cghidEventTap)
     }
 
     private func flash(title: String, systemImage: String) {
