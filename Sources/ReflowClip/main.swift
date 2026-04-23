@@ -123,6 +123,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
+// CLI modes (no menu bar).
+let args = CommandLine.arguments.dropFirst()
+
+if args.contains("--reflow-now") || args.contains("--test") {
+    let pasteboard = NSPasteboard.general
+    guard let original = pasteboard.string(forType: .string) else {
+        fputs("clipboard is empty or non-text\n", stderr)
+        exit(1)
+    }
+    print("BEFORE (\(original.count) chars):")
+    print(original)
+    print("---")
+    guard let reflowed = Reflow.apply(original) else {
+        print("NO CHANGE (single line or already clean)")
+        exit(0)
+    }
+    let wrote = pasteboard.clearContents()
+    let ok = pasteboard.setString(reflowed, forType: .string)
+    print("AFTER (\(reflowed.count) chars, setString=\(ok), changeCount=\(wrote)):")
+    print(reflowed)
+    print("---")
+    if let verify = NSPasteboard.general.string(forType: .string) {
+        print("VERIFY pbpaste (\(verify.count) chars):")
+        print(verify)
+    } else {
+        print("VERIFY pbpaste: nil")
+    }
+    exit(0)
+}
+
 let delegate = AppDelegate()
 let app = NSApplication.shared
 app.delegate = delegate

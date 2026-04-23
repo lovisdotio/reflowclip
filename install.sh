@@ -55,6 +55,8 @@ cat > "${PLIST_PATH}" <<PLIST
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
   <key>ProcessType</key><string>Interactive</string>
+  <key>StandardOutPath</key><string>/tmp/reflowclip.out.log</string>
+  <key>StandardErrorPath</key><string>/tmp/reflowclip.err.log</string>
 </dict>
 </plist>
 PLIST
